@@ -81,7 +81,8 @@ app.get("/api/products", (req: Request, res: Response): void => {
 });
 
 app.get("/api/products/:id", (req: Request, res: Response): void => {
-  const product = products.find((p) => p.id === Number(req.params.id));
+  const { id }: { id: string } = req.params; // ✅ Explicit type for id
+  const product = products.find((p) => p.id === Number(id));
   if (!product) {
     res.status(404).json({ error: "Product not found" });
     return;
