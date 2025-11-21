@@ -13,6 +13,13 @@ const ALLOWED_ORIGINS: string[] =
   process.env.ALLOWED_ORIGINS?.split(",") || ["*"];
 const MONGO_URI: string = process.env.MONGODB_URI || "";
 
+// ✅ Order type
+interface Order {
+  customer: { name: string; email: string; address: string };
+  products: any[];
+  total: number;
+}
+
 // =======================
 // 1. MongoDB Connection
 // =======================
@@ -55,7 +62,14 @@ app.get("/api/categories", (req: Request, res: Response): void => {
 // 5. Products
 // =======================
 app.get("/api/products", (req: Request, res: Response): void => {
-  const { category, search, maxPrice } = req.query;
+  const { category, search, maxPrice } = req.query as {
+    category?: string;
+    search?: string;
+    maxPrice?: string;
+    page?: string;
+    limit?: string;
+  };
+
   const page = parseInt(req.query.page as string) || 1;
   const limit = parseInt(req.query.limit as string) || 8;
   const skip = (page - 1) * limit;
@@ -66,7 +80,7 @@ app.get("/api/products", (req: Request, res: Response): void => {
   }
   if (search) {
     filtered = filtered.filter((p) =>
-      p.name.toLowerCase().includes((search as string).toLowerCase())
+      p.name.toLowerCase().includes(search.toLowerCase())
     );
   }
   if (maxPrice) {
@@ -80,8 +94,8 @@ app.get("/api/products", (req: Request, res: Response): void => {
   });
 });
 
-app.get("/api/products/:id", (req: Request, res: Response): void => {
-  const { id }: { id: string } = req.params; // ✅ Explicit type for id
+app.get("/api/products/:id", (req: Request<{ id: string }>, res: Response): void => {
+  const { id } = req.params;
   const product = products.find((p) => p.id === Number(id));
   if (!product) {
     res.status(404).json({ error: "Product not found" });
@@ -91,7 +105,11 @@ app.get("/api/products/:id", (req: Request, res: Response): void => {
 });
 
 app.get("/api/products/related", (req: Request, res: Response): void => {
-  const { productId, category, limit } = req.query;
+  const { productId, category, limit } = req.query as {
+    productId?: string;
+    category?: string;
+    limit?: string;
+  };
   let related = products.filter((p) => p.category === category);
   if (productId) {
     related = related.filter((p) => p.id !== Number(productId));
@@ -143,7 +161,7 @@ app.get("/api/directors", (req: Request, res: Response): void => {
 // =======================
 app.post("/api/orders", async (req: Request, res: Response): Promise<void> => {
   try {
-    const order = req.body;
+    const order: Order = req.body; // ✅ cast to Order
     console.log("🛒 New Order Received:", order);
 
     const message = `

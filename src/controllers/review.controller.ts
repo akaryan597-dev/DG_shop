@@ -12,7 +12,10 @@ export const getReviews = async (req: Request, res: Response): Promise<void> => 
 };
 
 // ✅ Get review by ID
-export const getReviewById = async (req: Request, res: Response): Promise<void> => {
+export const getReviewById = async (
+  req: Request<{ id: string }>, // ✅ params type specified
+  res: Response
+): Promise<void> => {
   try {
     const review = await ReviewModel.findById(req.params.id).populate("productId");
     if (!review) {
@@ -37,11 +40,14 @@ export const createReview = async (req: Request, res: Response): Promise<void> =
 };
 
 // ✅ Update review
-export const updateReview = async (req: Request, res: Response): Promise<void> => {
+export const updateReview = async (
+  req: Request<{ id: string }>, // ✅ params type specified
+  res: Response
+): Promise<void> => {
   try {
     const updatedReview = await ReviewModel.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      req.body as Partial<typeof ReviewModel>, // ✅ cast body
       { new: true }
     );
     if (!updatedReview) {
@@ -55,7 +61,10 @@ export const updateReview = async (req: Request, res: Response): Promise<void> =
 };
 
 // ✅ Delete review
-export const deleteReview = async (req: Request, res: Response): Promise<void> => {
+export const deleteReview = async (
+  req: Request<{ id: string }>, // ✅ params type specified
+  res: Response
+): Promise<void> => {
   try {
     const deletedReview = await ReviewModel.findByIdAndDelete(req.params.id);
     if (!deletedReview) {
@@ -69,7 +78,10 @@ export const deleteReview = async (req: Request, res: Response): Promise<void> =
 };
 
 // ✅ Get reviews for a specific product
-export const getProductReviews = async (req: Request, res: Response): Promise<void> => {
+export const getProductReviews = async (
+  req: Request<{ productId: string }>, // ✅ params type specified
+  res: Response
+): Promise<void> => {
   try {
     const { productId } = req.params;
     const reviews = await ReviewModel.find({ productId }).populate("productId");

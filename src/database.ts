@@ -1,21 +1,21 @@
-import mongoose from "mongoose";
-import dotenv from "dotenv";
 import path from "path";
+import { fileURLToPath } from "url";
+import dotenv from "dotenv";
 
-// ✅ Load environment variables safely
-dotenv.config({ path: path.resolve(__dirname, "../../../server/.env") });
+dotenv.config();
 
-export const connectDB = async (): Promise<void> => {
-  try {
-    const mongoUri = process.env.MONGODB_URI;
-    if (!mongoUri || mongoUri.trim() === "") {
-      throw new Error("❌ MONGODB_URI is not defined in .env file");
-    }
+// ✅ Fix for __dirname in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-    await mongoose.connect(mongoUri);
-    console.log("✅ MongoDB connected successfully");
-  } catch (error) {
-    console.error("❌ MongoDB connection failed:", error);
-    process.exit(1);
-  }
+// ✅ process.env types available via @types/node
+const MONGO_URI: string = process.env.MONGODB_URI || "";
+
+export const dbConfig = {
+  uri: MONGO_URI,
+  options: {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  },
+  path: path.join(__dirname, "data"),
 };
