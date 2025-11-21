@@ -1,11 +1,11 @@
-import mongoose from 'mongoose';
-import dotenv from 'dotenv';
-import { CategoryModel } from './models/category.model';
-import { ProductModel } from './models/product.model';
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+import ProductModel from "./models/product.model";
+import CategoryModel from "./models/category.model";
 
 dotenv.config();
 
-const MONGO_URI = process.env.MONGODB_URI || '';
+const MONGO_URI = process.env.MONGODB_URI || "";
 
 async function seedDatabase() {
   try {
@@ -16,26 +16,30 @@ async function seedDatabase() {
     await CategoryModel.deleteMany({});
     console.log("🗑️ Old categories cleared");
 
-    await CategoryModel.insertMany([
+    // Categories aligned with frontend icons + names
+    const categories = [
+      { name: "Cosmetics", icon: "CosmeticIcon" },
+      { name: "Live Plants/Trees", icon: "PlantIcon" },
+      { name: "Fruits", icon: "AppleIcon" },
       { name: "Vegetables", icon: "VegetablesIcon" },
       { name: "Groceries", icon: "GroceriesIcon" },
-      { name: "Cosmetics", icon: "CosmeticIcon" },
       { name: "Household", icon: "HouseholdIcon" },
-      { name: "Non-Veg", icon: "MeatIcon" },
-      { name: "Kids", icon: "BabyIcon" },
-      { name: "Appliances", icon: "AppliancesIcon" },
-      { name: "Plants", icon: "PlantIcon" },
+      { name: "Non-Veg (Desi & Kadaknath)", icon: "MeatIcon" },
+      { name: "Kids Products", icon: "BabyIcon" },
+      { name: "Electrical Appliances", icon: "AppliancesIcon" },
       { name: "Luxury", icon: "LuxuryIcon" }
-    ]);
+    ];
+
+    await CategoryModel.insertMany(categories);
     console.log("✅ Categories seeded successfully");
 
     // Clear old products
     await ProductModel.deleteMany({});
     console.log("🗑️ Old products cleared");
 
-    await ProductModel.insertMany([
+    // Products aligned with above categories
+    const products = [
       {
-        id: 1,
         name: "Organic Tomatoes",
         category: "Vegetables",
         brand: "DG Fresh",
@@ -48,7 +52,6 @@ async function seedDatabase() {
         reviews: 12
       },
       {
-        id: 2,
         name: "Basmati Rice 5kg",
         category: "Groceries",
         brand: "DG Essentials",
@@ -60,7 +63,6 @@ async function seedDatabase() {
         reviews: 15
       },
       {
-        id: 3,
         name: "Herbal Face Wash",
         category: "Cosmetics",
         brand: "DG Care",
@@ -72,7 +74,6 @@ async function seedDatabase() {
         reviews: 10
       },
       {
-        id: 4,
         name: "Detergent Powder 2kg",
         category: "Household",
         brand: "DG Clean",
@@ -84,9 +85,8 @@ async function seedDatabase() {
         reviews: 8
       },
       {
-        id: 5,
         name: "Kadaknath Chicken",
-        category: "Non-Veg",
+        category: "Non-Veg (Desi & Kadaknath)",
         brand: "DG Meat",
         price: 480,
         image: "https://picsum.photos/400/400?random=5",
@@ -97,9 +97,8 @@ async function seedDatabase() {
         reviews: 20
       },
       {
-        id: 6,
         name: "Baby Diapers Pack",
-        category: "Kids",
+        category: "Kids Products",
         brand: "DG Baby",
         price: 450,
         image: "https://picsum.photos/400/400?random=6",
@@ -109,9 +108,8 @@ async function seedDatabase() {
         reviews: 14
       },
       {
-        id: 7,
         name: "Mixer Grinder",
-        category: "Appliances",
+        category: "Electrical Appliances",
         brand: "DG Appliances",
         price: 2200,
         image: "https://picsum.photos/400/400?random=7",
@@ -121,9 +119,8 @@ async function seedDatabase() {
         reviews: 9
       },
       {
-        id: 8,
         name: "Tulsi Plant",
-        category: "Plants",
+        category: "Live Plants/Trees",
         brand: "DG Green",
         price: 70,
         image: "https://picsum.photos/400/400?random=8",
@@ -133,7 +130,6 @@ async function seedDatabase() {
         reviews: 11
       },
       {
-        id: 9,
         name: "Designer Perfume",
         category: "Luxury",
         brand: "DG Luxury",
@@ -145,14 +141,17 @@ async function seedDatabase() {
         rating: 4.7,
         reviews: 18
       }
-    ]);
+    ];
+
+    await ProductModel.insertMany(products);
     console.log("✅ Products seeded successfully");
 
     await mongoose.disconnect();
-    console.log("🔌 MongoDB disconnected");
+    console.log("🔌 Disconnected from MongoDB");
   } catch (error) {
     console.error("❌ Seeding error:", error);
   }
 }
 
+// Run seeding
 seedDatabase();

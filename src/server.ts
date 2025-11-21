@@ -1,139 +1,176 @@
 import express from 'express';
-import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cors from 'cors';
-
-import { CategoryModel } from './models/category.model';
-import { ProductModel } from './models/product.model';
+import mongoose from 'mongoose';
+import { categories, products, reviews, directors } from './data/seedData';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const MONGO_URI = process.env.MONGODB_URI || '';
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS?.split(",") || ["*"];
+const MONGO_URI = process.env.MONGODB_URI || "";
 
-app.use(cors());
+// =======================
+// 1. MongoDB Connection
+// =======================
+mongoose.connect(MONGO_URI)
+  .then(() => console.log("✅ MongoDB connected successfully"))
+  .catch(err => {
+    console.error("❌ MongoDB connection error:", err);
+    process.exit(1);
+  });
+
+// =======================
+// 2. Middlewares
+// =======================
+app.use(cors({
+  origin: ALLOWED_ORIGINS,
+  credentials: true
+}));
 app.use(express.json());
 
-// ✅ Categories route
-app.get('/categories', async (req, res) => {
-  try {
-    const categories = await CategoryModel.find({});
-    res.json(categories);
-  } catch (error) {
-    console.error("❌ Error fetching categories:", error);
-    res.status(500).json({ error: 'Failed to fetch categories' });
-  }
+// =======================
+// 3. Health Check
+// =======================
+app.get('/', (req, res) => {
+  res.json({ status: "ok", message: "DG_shop backend running 🚀" });
 });
 
-// ✅ Products route with category + pagination + search + price filter
-app.get('/products', async (req, res) => {
-  try {
-    const { category, search, maxPrice } = req.query;
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 8;
-    const skip = (page - 1) * limit;
-
-    const query: any = {};
-    if (category && category !== "all") query.category = category;
-    if (search) query.name = { $regex: search, $options: 'i' };
-    if (maxPrice) query.price = { $lte: Number(maxPrice) };
-
-    const products = await ProductModel.find(query).skip(skip).limit(limit);
-    const total = await ProductModel.countDocuments(query);
-
-    res.json({
-      products,
-      hasMore: page * limit < total
-    });
-  } catch (error) {
-    console.error("❌ Error fetching products:", error);
-    res.status(500).json({ error: 'Failed to fetch products' });
-  }
+// =======================
+// 4. Categories
+// =======================
+app.get('/api/categories', (req, res) => {
+  res.json(categories);
 });
 
-// ✅ Single product by ID (safe check)
-app.get('/products/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
+// =======================
+// 5. Products
+// =======================
 
-    // Check if id is a valid ObjectId
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ error: 'Invalid product id' });
-    }
+// (a) Products with filter + pagination
+app.get('/api/products', (req, res) => {
+  const { category, search, maxPrice } = req.query;
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 8;
+  const skip = (page - 1) * limit;
 
-    const product = await ProductModel.findById(id);
-    if (!product) return res.status(404).json({ error: 'Product not found' });
-
-    res.json(product);
-  } catch (error) {
-    console.error("❌ Error fetching product:", error);
-    res.status(500).json({ error: 'Failed to fetch product' });
+  let filtered = [...products];
+  if (category && category !== "all") {
+    filtered = filtered.filter(p => p.category === category);
   }
-});
-
-// ✅ Related products by category (safe check)
-app.get('/products/related', async (req, res) => {
-  try {
-    const { productId, category, limit } = req.query;
-    const query: any = {};
-
-    if (category) query.category = category;
-
-    if (productId && mongoose.Types.ObjectId.isValid(productId as string)) {
-      query._id = { $ne: productId };
-    }
-
-    const products = await ProductModel.find(query).limit(parseInt(limit as string) || 4);
-    res.json(products);
-  } catch (error) {
-    console.error("❌ Error fetching related products:", error);
-    res.status(500).json({ error: 'Failed to fetch related products' });
+  if (search) {
+    filtered = filtered.filter(p =>
+      p.name.toLowerCase().includes((search as string).toLowerCase())
+    );
   }
-});
-
-// ✅ Bestsellers route
-app.get('/products/bestsellers', async (req, res) => {
-  try {
-    const limit = parseInt(req.query.limit as string) || 4;
-    const products = await ProductModel.find({ bestseller: true }).limit(limit);
-    res.json(products);
-  } catch (error) {
-    console.error("❌ Error fetching bestsellers:", error);
-    res.status(500).json({ error: 'Failed to fetch bestsellers' });
+  if (maxPrice) {
+    filtered = filtered.filter(p => p.price <= Number(maxPrice));
   }
-});
 
-// ✅ Reviews placeholder
-app.get('/reviews', async (req, res) => {
-  try {
-    res.json([
-      { id: 1, author: "Ravi Kumar", rating: 5, comment: "Bahut hi badhiya products aur fast delivery!", date: "2025-11-18", image: "https://picsum.photos/100?random=21" },
-      { id: 2, author: "Neha Singh", rating: 4, comment: "Quality achhi hai, price bhi sahi hai.", date: "2025-11-17", image: "https://picsum.photos/100?random=22" },
-      { id: 3, author: "Amit Verma", rating: 5, comment: "Patna mein aisa premium supermarket pehli baar dekha!", date: "2025-04-16", image: "https://picsum.photos/100?random=23" },
-      { id: 4, author: "Priya Jha", rating: 4, comment: "Vegetables fresh aur organic milte hain.", date: "2025-11-15", image: "https://picsum.photos/100?random=24" },
-      { id: 5, author: "Saurabh Mishra", rating: 5, comment: "Kadaknath chicken ekdum asli aur tasty tha!", date: "2025-10-14", image: "https://picsum.photos/100?random=25" },
-      { id: 6, author: "Anjali Sharma", rating: 5, comment: "Delivery time par hui aur packaging bhi classy thi.", date: "2025-09-13", image: "https://picsum.photos/100?random=26" },
-      { id: 7, author: "Rahul Yadav", rating: 4, comment: "Prices affordable hain aur quality bhi maintain hai.", date: "2025-11-12", image: "https://picsum.photos/100?random=27" },
-      { id: 8, author: "Sneha Kumari", rating: 5, comment: "Customer support chatbot helpful hai checkout mein.", date: "2025-11-11", image: "https://picsum.photos/100?random=28" },
-      { id: 9, author: "Vikash Gupta", rating: 4, comment: "Festival theme mode ekdum mast lagta hai shopping ke time.", date: "2025-05-10", image: "https://picsum.photos/100?random=29" },
-      { id: 10, author: "Shalini Raj", rating: 5, comment: "DG_shop ka tagline ‘Patna se Patna ke liye’ dil ko chhoo gaya.", date: "2025-02-09", image: "https://picsum.photos/100?random=30" }
-    ]);
-  } catch (error) {
-    console.error("❌ Error fetching reviews:", error);
-    res.status(500).json({ error: 'Failed to fetch reviews' });
-  }
-});
-
-// ✅ Connect to MongoDB and start server
-mongoose
-  .connect(MONGO_URI)
-  .then(() => {
-    console.log("✅ Connected to MongoDB");
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on http://localhost:${PORT}`);
-    });
-  })
-  .catch((error) => {
-    console.error("❌ MongoDB connection error:", error);
+  const paginated = filtered.slice(skip, skip + limit);
+  res.json({
+    products: paginated,
+    hasMore: page * limit < filtered.length
   });
+});
+
+// (b) Single product by ID
+app.get('/api/products/:id', (req, res) => {
+  const product = products.find(p => p.id === Number(req.params.id));
+  if (!product) return res.status(404).json({ error: 'Product not found' });
+  res.json(product);
+});
+
+// (c) Related products
+app.get('/api/products/related', (req, res) => {
+  const { productId, category, limit } = req.query;
+  let related = products.filter(p => p.category === category);
+  if (productId) {
+    related = related.filter(p => p.id !== Number(productId));
+  }
+  res.json(related.slice(0, Number(limit) || 4));
+});
+
+// (d) Bestsellers
+app.get('/api/products/bestsellers', (req, res) => {
+  const limit = parseInt(req.query.limit as string) || 4;
+  const bestsellers = products.filter(p => (p.tags as string[])?.includes('bestseller'));
+  res.json(bestsellers.slice(0, limit));
+});
+
+// (e) Products by IDs (Wishlist support)
+app.get('/api/products/by-ids', (req, res) => {
+  try {
+    const ids = req.query.ids?.toString().split(",").map(id => Number(id)) || [];
+    if (!ids.length) {
+      return res.json([]);
+    }
+    const matched = products.filter(p => ids.includes(p.id));
+    res.json(matched);
+  } catch (err) {
+    console.error("❌ Error fetching products by IDs:", err);
+    res.status(500).json({ error: "Failed to fetch products by IDs" });
+  }
+});
+
+// =======================
+// 6. Reviews
+// =======================
+app.get('/api/reviews', (req, res) => {
+  const limit = parseInt(req.query.limit as string) || reviews.length;
+  res.json(reviews.slice(0, limit));
+});
+
+// =======================
+// 7. Directors
+// =======================
+app.get('/api/directors', (req, res) => {
+  res.json(directors);
+});
+
+// =======================
+// 8. Orders
+// =======================
+app.post('/api/orders', async (req, res) => {
+  try {
+    const order = req.body;
+    console.log("🛒 New Order Received:", order);
+
+    // ✅ Telegram message format
+    const message = `
+📦 *New Order Received!*
+👤 *Customer:* ${order.customer.name}
+📧 *Email:* ${order.customer.email}
+📍 *Address:* ${order.customer.address}
+🛒 *Items:* ${order.products.length}
+💰 *Total:* ₹${order.total}
+🕒 *Time:* ${new Date().toLocaleString()}
+`;
+
+    // ✅ Telegram API call
+;
+
+    await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: process.env.TELEGRAM_CHAT_ID,
+        text: message,
+        parse_mode: "Markdown"
+      })
+    });
+
+    res.json({ success: true, message: "Order received successfully!", order });
+  } catch (err) {
+    console.error("❌ Error saving order:", err);
+    res.status(500).json({ error: "Failed to save order" });
+  }
+});
+
+// =======================
+// 9. Start Server
+// =======================
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
+});

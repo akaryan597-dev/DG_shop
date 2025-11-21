@@ -1,8 +1,16 @@
-import mongoose from "mongoose";
+import mongoose, { Schema, Document } from "mongoose";
 
-const CategorySchema = new mongoose.Schema({
-  name: { type: String, required: true, unique: true }, // ✅ unique category names
-  icon: { type: String }
-});
+export interface ICategory extends Document {
+  name: string;
+  icon: string; // ✅ icon field added for frontend mapping
+}
 
-export const CategoryModel = mongoose.model("Category", CategorySchema);
+const CategorySchema: Schema = new Schema(
+  {
+    name: { type: String, required: true },
+    icon: { type: String, required: true } // ✅ required icon field
+  },
+  { timestamps: true }
+);
+
+export default mongoose.model<ICategory>("Category", CategorySchema);
