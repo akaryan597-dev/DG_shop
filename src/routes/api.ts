@@ -1,28 +1,28 @@
-import { Router } from 'express';
-import * as productController from '../controllers/product.controller';
-import * as categoryController from '../controllers/category.controller';
-import * as reviewController from '../controllers/review.controller';
-import * as directorController from '../controllers/director.controller';
-import * as aiController from '../controllers/ai.controller';
+import { Router, Request, Response } from "express";
+import * as directorController from "../controllers/director.controller";
+import * as reviewController from "../controllers/review.controller";
+// Agar aur controllers hain (product, user, order), unko bhi yahan import kar sakte ho
 
 const router = Router();
 
-// Product routes
-router.get('/products', productController.getProducts);
-router.get('/products/bestsellers', productController.getBestsellers);
-router.get('/products/related', productController.getRelatedProducts);
-router.get('/products/suggestions', productController.searchSuggestions);
-router.get('/products/:id', productController.getProductById);
-router.post('/products/by-ids', productController.getProductsByIds);
+// ✅ Director Routes
+router.get("/directors", directorController.getDirectors);
+router.get("/directors/:id", directorController.getDirectorById);
+router.post("/directors", directorController.createDirector);
+router.put("/directors/:id", directorController.updateDirector);
+router.delete("/directors/:id", directorController.deleteDirector);
 
-// Other routes
-router.get('/categories', categoryController.getCategories);
-router.get('/reviews', reviewController.getReviews);
-router.get('/reviews/:productId', reviewController.getProductReviews);
-router.get('/directors', directorController.getDirectors);
+// ✅ Review Routes
+router.get("/reviews", reviewController.getReviews);
+router.get("/reviews/:id", reviewController.getReviewById);
+router.post("/reviews", reviewController.createReview);
+router.put("/reviews/:id", reviewController.updateReview);
+router.delete("/reviews/:id", reviewController.deleteReview);
 
-// AI routes
-router.post('/ai/chat', aiController.chatWithAI);
-router.post('/ai/image', aiController.generateImage);
+// ✅ Get reviews for a specific product
+router.get(
+  "/reviews/product/:productId",
+  (req: Request, res: Response) => reviewController.getProductReviews(req, res)
+);
 
 export default router;

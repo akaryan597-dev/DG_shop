@@ -5,10 +5,14 @@ import CategoryModel from "./models/category.model";
 
 dotenv.config();
 
-const MONGO_URI = process.env.MONGODB_URI || "";
+const MONGO_URI: string = process.env.MONGODB_URI || "";
 
-async function seedDatabase() {
+async function seedDatabase(): Promise<void> {
   try {
+    if (!MONGO_URI) {
+      throw new Error("❌ MONGODB_URI is not defined in environment variables");
+    }
+
     await mongoose.connect(MONGO_URI);
     console.log("✅ Connected to MongoDB for seeding");
 
@@ -17,7 +21,7 @@ async function seedDatabase() {
     console.log("🗑️ Old categories cleared");
 
     // Categories aligned with frontend icons + names
-    const categories = [
+    const categories: { name: string; icon: string }[] = [
       { name: "Cosmetics", icon: "CosmeticIcon" },
       { name: "Live Plants/Trees", icon: "PlantIcon" },
       { name: "Fruits", icon: "AppleIcon" },
@@ -27,7 +31,7 @@ async function seedDatabase() {
       { name: "Non-Veg (Desi & Kadaknath)", icon: "MeatIcon" },
       { name: "Kids Products", icon: "BabyIcon" },
       { name: "Electrical Appliances", icon: "AppliancesIcon" },
-      { name: "Luxury", icon: "LuxuryIcon" }
+      { name: "Luxury", icon: "LuxuryIcon" },
     ];
 
     await CategoryModel.insertMany(categories);
@@ -38,7 +42,18 @@ async function seedDatabase() {
     console.log("🗑️ Old products cleared");
 
     // Products aligned with above categories
-    const products = [
+    const products: {
+      name: string;
+      category: string;
+      brand: string;
+      price: number;
+      image: string;
+      description: string;
+      tags: string[];
+      bestseller?: boolean;
+      rating: number;
+      reviews: number;
+    }[] = [
       {
         name: "Organic Tomatoes",
         category: "Vegetables",
@@ -49,7 +64,7 @@ async function seedDatabase() {
         tags: ["organic"],
         bestseller: true,
         rating: 4.5,
-        reviews: 12
+        reviews: 12,
       },
       {
         name: "Basmati Rice 5kg",
@@ -60,7 +75,7 @@ async function seedDatabase() {
         description: "Premium long grain basmati rice.",
         tags: ["staple"],
         rating: 4.4,
-        reviews: 15
+        reviews: 15,
       },
       {
         name: "Herbal Face Wash",
@@ -71,7 +86,7 @@ async function seedDatabase() {
         description: "Refreshing herbal face wash.",
         tags: ["skincare"],
         rating: 4.3,
-        reviews: 10
+        reviews: 10,
       },
       {
         name: "Detergent Powder 2kg",
@@ -82,7 +97,7 @@ async function seedDatabase() {
         description: "Powerful detergent powder.",
         tags: ["cleaning"],
         rating: 4.2,
-        reviews: 8
+        reviews: 8,
       },
       {
         name: "Kadaknath Chicken",
@@ -94,7 +109,7 @@ async function seedDatabase() {
         tags: ["protein"],
         bestseller: true,
         rating: 4.6,
-        reviews: 20
+        reviews: 20,
       },
       {
         name: "Baby Diapers Pack",
@@ -105,7 +120,7 @@ async function seedDatabase() {
         description: "Soft and absorbent baby diapers.",
         tags: ["babycare"],
         rating: 4.5,
-        reviews: 14
+        reviews: 14,
       },
       {
         name: "Mixer Grinder",
@@ -116,7 +131,7 @@ async function seedDatabase() {
         description: "Durable mixer grinder.",
         tags: ["kitchen"],
         rating: 4.3,
-        reviews: 9
+        reviews: 9,
       },
       {
         name: "Tulsi Plant",
@@ -127,7 +142,7 @@ async function seedDatabase() {
         description: "Sacred Tulsi plant.",
         tags: ["eco"],
         rating: 4.6,
-        reviews: 11
+        reviews: 11,
       },
       {
         name: "Designer Perfume",
@@ -139,8 +154,8 @@ async function seedDatabase() {
         tags: ["fragrance"],
         bestseller: true,
         rating: 4.7,
-        reviews: 18
-      }
+        reviews: 18,
+      },
     ];
 
     await ProductModel.insertMany(products);
@@ -150,8 +165,12 @@ async function seedDatabase() {
     console.log("🔌 Disconnected from MongoDB");
   } catch (error) {
     console.error("❌ Seeding error:", error);
+    process.exit(1);
   }
 }
 
 // Run seeding
-seedDatabase();
+seedDatabase().catch((err) => {
+  console.error("❌ Unhandled seeding error:", err);
+  process.exit(1);
+});

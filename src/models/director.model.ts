@@ -1,10 +1,19 @@
-import { Schema, model } from 'mongoose';
+import mongoose, { Document, Schema } from "mongoose";
 
-const directorSchema = new Schema({
-    name: { type: String, required: true, unique: true },
-    title: { type: String, required: true },
-    image: { type: String, required: true },
-    bio: { type: String, required: true },
+// ✅ Define Director interface
+export interface IDirector extends Document {
+  name: string;
+  movies: string[];
+}
+
+// ✅ Schema
+const directorSchema: Schema = new mongoose.Schema({
+  name: { type: String, required: true },
+  movies: [{ type: String }]
 });
 
-export const DirectorModel = model('Director', directorSchema);
+// ✅ Model
+const DirectorModel = mongoose.model<IDirector>("Director", directorSchema);
+
+// ✅ Default export (so controller can use `import DirectorModel from ...`)
+export default DirectorModel;

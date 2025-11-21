@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Request, Response } from "express";
 
 // Define safe types
 interface InlineData {
@@ -34,9 +34,9 @@ const aiClient = {
 };
 
 // Chat with AI
-export const chatWithAI = async (req: Request, res: Response) => {
+export const chatWithAI = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { prompt } = req.body;
+    const { prompt } = req.body as { prompt: string };
     const response: AIResponse = await aiClient.generateContent(prompt);
 
     if (response.candidates && response.candidates.length > 0) {
@@ -59,9 +59,9 @@ export const chatWithAI = async (req: Request, res: Response) => {
 };
 
 // Generate Image
-export const generateImage = async (req: Request, res: Response) => {
+export const generateImage = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { prompt } = req.body;
+    const { prompt } = req.body as { prompt: string };
     const response: AIResponse = await aiClient.generateImage(prompt);
 
     if (response.candidates && response.candidates.length > 0) {

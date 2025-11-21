@@ -1,14 +1,21 @@
-import { Schema, model } from 'mongoose';
+import mongoose, { Document, Schema } from "mongoose";
 
-const reviewSchema = new Schema({
-    id: { type: Number, required: true, unique: true },
-    productId: { type: Number, required: true, index: true },
-    author: { type: String, required: true },
-    rating: { type: Number, required: true },
-    comment: { type: String, required: true },
-    image: { type: String },
-    verified: { type: Boolean, default: true },
-    date: { type: String, required: true },
-});
+// ✅ Define Review interface
+export interface IReview extends Document {
+  productId: mongoose.Types.ObjectId;
+  rating: number;
+  comment: string;
+}
 
-export const ReviewModel = model('Review', reviewSchema);
+// ✅ Schema
+const reviewSchema: Schema = new mongoose.Schema({
+  productId: { type: Schema.Types.ObjectId, ref: "Product", required: true },
+  rating: { type: Number, required: true, min: 1, max: 5 },
+  comment: { type: String, trim: true }
+}, { timestamps: true });
+
+// ✅ Model
+const ReviewModel = mongoose.model<IReview>("Review", reviewSchema);
+
+// ✅ Default export (so controller can use `import ReviewModel from ...`)
+export default ReviewModel;
